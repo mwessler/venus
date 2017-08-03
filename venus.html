@@ -1,0 +1,94 @@
+<html>
+<head>
+</head>
+<body>
+<canvas id="c" width="1200" height="1200"></canvas>
+<script lanugage="Javascript">
+var canv = document.getElementById('c');
+var g = canv.getContext('2d');
+g.setStrokeColor('rgba(0, 0, 0, 0.4)');
+g.setLineWidth(0.5);
+
+var rad = 600;
+var r1 = 550;
+var r2 = 280;
+
+var o1 = 4;
+var o2 = 9;
+
+var max = o1*o2;
+
+var ang = 0;
+function draw() {
+    if (ang >= max*Math.PI*2-0.001) {
+        donext();
+        return;
+    }
+    var a1 = (ang+21)/o1;
+    var a2 = (ang+21)/o2;
+    var c1 = Math.cos(a1);
+    var s1 = Math.sin(a1);
+    var c2 = Math.cos(a2);
+    var s2 = Math.sin(a2);
+    g.beginPath();
+    g.moveTo(rad+c1*r1, rad+s1*r1);
+    g.lineTo(rad+c2*r2, rad+s2*r2);
+    g.stroke();
+    ang += Math.PI*o1/81;
+    setTimeout(draw, 0);
+}
+
+function gcd(a, b) {
+    if (b > a) {
+        // swap
+        [a, b] = [b, a];
+    }
+    while (b != 0) {
+        [a, b] = [b, a % b];
+    }
+    return a;
+}
+
+var state = 0
+function donext() {
+    state++;
+    if (state % 2 == 0) {
+//       console.log("DONE");
+        count = 0;
+        setTimeout(fade, 4000);
+    }
+    else {
+        ang = 0;
+        o1 = Math.floor(Math.random()*20+3);
+        o2 = Math.floor(Math.random()*20+3);
+        var d = gcd(o1, o2)
+        max = o1*o2 / d;
+        g.setFillColor('black');
+        g.fillText(o1 + ' x ' + o2, 3, rad*3/4);
+        if (d != 1) {
+            g.fillText("(" + (o1/d) + " x " + (o2/d) + ")", 3, rad*3/4 + 10);
+        }
+        draw();
+    }
+}
+
+var count = 0;
+function fade() {
+    if (count++ < 90) {
+        g.setFillColor('rgba(255,255,255,'+count/200+')');
+        g.fillRect(0, 0, rad*2, rad*2);
+        setTimeout(fade, 4);
+    }
+    else {
+        g.setFillColor('white');
+        g.fillRect(0, 0, rad*2, rad*2);
+        donext();
+    }
+}
+
+donext();
+
+
+</script>
+</body>
+</html>
