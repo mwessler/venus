@@ -18,6 +18,8 @@ var o2 = 9;
 
 var max = o1*o2;
 
+var segments = [];
+
 var ang = 0;
 function draw() {
     if (ang >= max*Math.PI*2-0.001) {
@@ -30,12 +32,35 @@ function draw() {
     var s1 = Math.sin(a1);
     var c2 = Math.cos(a2);
     var s2 = Math.sin(a2);
+    var x1 = rad+c1*r1;
+    var x2 = rad+c2*r2;
+    var y1 = rad+s1*r1;
+    var y2 = rad+s2*r2;
     g.beginPath();
-    g.moveTo(rad+c1*r1, rad+s1*r1);
-    g.lineTo(rad+c2*r2, rad+s2*r2);
+    g.moveTo(x1, y1);
+    g.lineTo(x2, y2);
     g.stroke();
+    var dx = x2-x1;
+    var dy = y2-y1;
+    var len = Math.sqrt(dx*dx + dy*dy);
+    var segment = {
+        cx: (x1+x2)/2,
+        cy: (y1+y2)/2,
+        cos: dx/len,
+        sin: dy/len,
+        rad: len/2,
+        deleted: false,
+        delay: x1/10,
+        opacity: 0.4,
+        func: 0
+    };
+    segment.dx = segment.cos * 10;
+    segment.dy = segment.sin * 10;
+    segments.push(segment);
     ang += Math.PI*o1/81;
-    setTimeout(draw, 0);
+    let now = new Date().getTime();
+    let next = Math.floor(now/10)*10+10;
+    setTimeout(draw, next-now);
 }
 
 function gcd(a, b) {
@@ -53,11 +78,11 @@ var state = 0
 function donext() {
     state++;
     if (state % 2 == 0) {
-//       console.log("DONE");
-        count = 0;
-        setTimeout(fade, 4000);
+        setTimeout(erase, 4000);
     }
     else {
+        segments = [];
+        g.setStrokeColor('rgba(0, 0, 0, 0.4)');
         ang = 0;
         o1 = Math.floor(Math.random()*20+3);
         o2 = Math.floor(Math.random()*20+3);
@@ -72,18 +97,148 @@ function donext() {
     }
 }
 
-var count = 0;
-function fade() {
-    if (count++ < 90) {
-        g.setFillColor('rgba(255,255,255,'+count/200+')');
-        g.fillRect(0, 0, rad*2, rad*2);
-        setTimeout(fade, 4);
+let anims = [
+    [preswing, swing, fall],
+    [wait, drift],
+    [randomdelay, wait, bump, fall],
+    [wait, fade],
+    [wait, undraw]
+];
+
+function erase() {
+    doErase(anims[Math.floor(Math.random()*anims.length)]);
+}
+
+function doErase(work) {
+    g.setFillColor('white');
+    g.fillRect(0, 0, rad*2, rad*2);
+    var done = true;
+    for (let seg of segments) {
+        if (seg.func >= 0 && seg.func < work.length) {
+            done = false;
+            work[seg.func](seg);
+            if (!drawseg(seg)) {
+                seg.func = -1;
+            }
+        }
     }
-    else {
-        g.setFillColor('white');
-        g.fillRect(0, 0, rad*2, rad*2);
+    if (done) {
         donext();
     }
+    else {
+        let now = new Date().getTime();
+        let next = Math.floor(now/30)*30+30;
+        setTimeout(() => {doErase(work)}, next-now);
+    }
+}
+
+function drawseg(seg) {
+    g.setStrokeColor('rgba(0,0,0,'+seg.opacity+')');
+    g.beginPath();
+    let x1 = seg.cx - seg.cos*seg.rad;
+    let x2 = seg.cx + seg.cos*seg.rad;
+    let y1 = seg.cy - seg.sin*seg.rad;
+    let y2 = seg.cy + seg.sin*seg.rad;
+    g.moveTo(x1, y1);
+    g.lineTo(x2, y2);
+    g.stroke();
+    if (((x1 < 0 || x1 > rad*2) && (x2 < 0 || x2 > rad*2))
+        || ((y1 < 0 || y1 > rad*2) && (y2 < 0 || y2 > rad*2))
+    ) {
+        return false;
+    }
+    return true;
+}
+
+function randomdelay(seg) {
+    seg.delay = Math.random()*30*6;
+    seg.func++;
+}
+
+function wait(seg) {
+    if (seg.delay > 0) {
+        seg.delay -= 1;
+    }
+    else {
+        seg.func++;
+    }
+}
+
+function drift(seg) {
+    seg.cx += seg.dx;
+    seg.cy += seg.dy;
+}
+
+function fade(seg) {
+    if (seg.opacity < 0.01) {
+        seg.opacity -= 0.001;
+        if (seg.opacity < 0) {
+            seg.opacity = 0;
+            seg.func = -1;
+        }
+    }
+    else {
+        seg.opacity = seg.opacity * 0.9;
+    }
+}
+
+function preswing(seg) {
+    seg.func++;
+    seg.dx = 0;
+    seg.dy = 0;
+    seg.da = 0;
+    seg.side = -1; //Math.random() > 0.5 ? 1 : -1;
+    seg.delay = 30 + Math.exp(Math.random()*4.5);
+}
+
+function swing(seg) {
+    var t = seg.cos;
+    var oldda = seg.da;
+    seg.da += t / seg.rad * seg.side;
+    let oldx = seg.cx - seg.cos * seg.rad * seg.side;
+    let oldy = seg.cy - seg.sin * seg.rad * seg.side;
+    let oldcx = seg.cx;
+    let oldcy = seg.cy;
+    rotateseg(seg);
+    seg.cx = oldx + seg.cos * seg.rad * seg.side;
+    seg.cy = oldy + seg.sin * seg.rad * seg.side;
+    seg.delay--;
+    if (seg.delay <= 0) {
+        seg.dx = seg.cx - oldcx;
+        seg.dy = seg.cy - oldcy;
+        seg.func++;
+    }
+}
+
+function rotateseg(seg) {
+    let dc = Math.cos(seg.da);
+    let ds = Math.sin(seg.da);
+    let nc = seg.cos * dc - seg.sin * ds;
+    let ns = seg.sin * dc + seg.cos * ds;
+    seg.sin = ns;
+    seg.cos = nc;
+}
+
+function bump(seg) {
+    seg.dx = Math.random()*2-1;
+    seg.dy = Math.random()*2-1;
+    seg.da = (Math.random()-0.5)/10;
+    seg.func++;
+}
+
+function undraw(seg) {
+    seg.rad -= 1+seg.rad/100;
+    if (seg.rad < 0) {
+        seg.rad = 0;
+        seg.func = -1;
+    }
+}
+
+function fall(seg) {
+    rotateseg(seg);
+    seg.dy += 0.6;
+    seg.cx += seg.dx;
+    seg.cy += seg.dy;
 }
 
 donext();
