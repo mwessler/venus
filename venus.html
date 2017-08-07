@@ -6,8 +6,8 @@
 <script lanugage="Javascript">
 var canv = document.getElementById('c');
 var g = canv.getContext('2d');
-g.setStrokeColor('rgba(0, 0, 0, 0.4)');
-g.setLineWidth(0.5);
+g.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+g.lineWidth = 0.5;
 
 var rad = 600;
 var r1 = 550;
@@ -82,13 +82,13 @@ function donext() {
     }
     else {
         segments = [];
-        g.setStrokeColor('rgba(0, 0, 0, 0.4)');
+        g.strokeStyle = 'rgba(0, 0, 0, 0.4)';
         ang = 0;
         o1 = Math.floor(Math.random()*20+3);
         o2 = Math.floor(Math.random()*20+3);
         var d = gcd(o1, o2)
         max = o1*o2 / d;
-        g.setFillColor('black');
+        g.fillStyle = 'black';
         g.fillText(o1 + ' x ' + o2, 3, rad*3/4);
         if (d != 1) {
             g.fillText("(" + (o1/d) + " x " + (o2/d) + ")", 3, rad*3/4 + 10);
@@ -110,7 +110,7 @@ function erase() {
 }
 
 function doErase(work) {
-    g.setFillColor('white');
+    g.fillStyle = 'white';
     g.fillRect(0, 0, rad*2, rad*2);
     var done = true;
     for (let seg of segments) {
@@ -133,7 +133,7 @@ function doErase(work) {
 }
 
 function drawseg(seg) {
-    g.setStrokeColor('rgba(0,0,0,'+seg.opacity+')');
+    g.strokeStyle = 'rgba(0,0,0,'+seg.opacity+')';
     g.beginPath();
     let x1 = seg.cx - seg.cos*seg.rad;
     let x2 = seg.cx + seg.cos*seg.rad;
