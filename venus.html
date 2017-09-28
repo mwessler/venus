@@ -1,17 +1,31 @@
 <html>
 <head>
 </head>
-<body>
-<canvas id="c" width="1200" height="1200"></canvas>
+<body style='background:white'>
+<canvas id="c" width="1000" height="1000"></canvas>
 <script lanugage="Javascript">
+var fg = {
+//    r: 255,
+//    g: 240,
+//    b: 230,
+//    a: 0.4
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0.4
+}
+//var bg = 'black';
+var bg = 'white';
 var canv = document.getElementById('c');
 var g = canv.getContext('2d');
-g.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+g.strokeStyle = 'rgba(' + fg.r + ', ' + fg.g + ', ' + fg.b + ', ' + fg.a + ')';
 g.lineWidth = 0.5;
 
-var rad = 600;
-var r1 = 550;
-var r2 = 280;
+var rad = canv.clientHeight/2;
+
+//var rad = 400;
+var r1 = rad*550/600;
+var r2 = rad*280/600;
 
 var o1 = 4;
 var o2 = 9;
@@ -82,13 +96,13 @@ function donext() {
     }
     else {
         segments = [];
-        g.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        g.strokeStyle = 'rgba(' + fg.r + ', ' + fg.g + ', ' + fg.b + ', ' + fg.a + ')';
         ang = 0;
         o1 = Math.floor(Math.random()*20+3);
         o2 = Math.floor(Math.random()*20+3);
         var d = gcd(o1, o2)
         max = o1*o2 / d;
-        g.fillStyle = 'black';
+        g.fillStyle = 'rgb(' + fg.r + ', ' + fg.g + ', ' + fg.b + ')';
         g.fillText(o1 + ' x ' + o2, 3, rad*3/4);
         if (d != 1) {
             g.fillText("(" + (o1/d) + " x " + (o2/d) + ")", 3, rad*3/4 + 10);
@@ -110,7 +124,7 @@ function erase() {
 }
 
 function doErase(work) {
-    g.fillStyle = 'white';
+    g.fillStyle = bg;
     g.fillRect(0, 0, rad*2, rad*2);
     var done = true;
     for (let seg of segments) {
@@ -133,7 +147,7 @@ function doErase(work) {
 }
 
 function drawseg(seg) {
-    g.strokeStyle = 'rgba(0,0,0,'+seg.opacity+')';
+    g.strokeStyle = 'rgba(' + fg.r + ', ' + fg.g + ', ' + fg.b + ', ' + seg.opacity+')';
     g.beginPath();
     let x1 = seg.cx - seg.cos*seg.rad;
     let x2 = seg.cx + seg.cos*seg.rad;
